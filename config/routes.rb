@@ -9,6 +9,16 @@ Rails.application.routes.draw do
   get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
   get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
 
-  # Defines the root path route ("/")
-  # root "posts#index"
+  root "sessions#new"
+  get "login", to: "sessions#new", as: :login
+  delete "logout", to: "sessions#destroy", as: :logout
+
+  # El GET a /auth/google_oauth2 (inicio del flujo) lo intercepta el middleware
+  # de OmniAuth antes de llegar al router; sólo necesitamos rutear el callback
+  # y el camino de falla.
+  get "auth/google_oauth2/callback", to: "omniauth_callbacks#google_oauth2"
+  get "auth/failure", to: "omniauth_callbacks#failure"
+
+  get "panel/:role", to: "dashboards#show", as: :dashboard,
+      constraints: { role: /usuario|administrador/ }
 end

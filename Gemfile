@@ -55,3 +55,11 @@ group :test do
   gem "capybara"
   gem "selenium-webdriver"
 end
+
+# --- Prototipo de integración con Google (PIS) ---
+gem "inertia_rails", "~> 3.22"
+gem "vite_rails", "~> 3.11"
+
+# Login real con cuenta de Google (OAuth2) para Empleado/Administrador.
+gem "omniauth-google-oauth2"
+gem "omniauth-rails_csrf_protection"

@@ -1,39 +1,91 @@
-# syntax = docker/dockerfile:1
-# Dockerfile de DESARROLLO (no para produccion). Coincide con docker-compose.yml,
-# que monta el codigo en /app como volumen para que los cambios se vean sin rebuild.
+# syntax=docker/dockerfile:1
 
 ARG RUBY_VERSION=3.3.12
-FROM docker.io/library/ruby:$RUBY_VERSION-slim
+ARG NODE_VERSION=22
 
-WORKDIR /app
+# Node se copia en la imagen de Ruby para soportar React, Inertia y shadcn/ui.
+FROM docker.io/library/node:${NODE_VERSION}-bookworm-slim AS node
 
-# Paquetes de sistema para compilar gems nativas y correr la app
+FROM docker.io/library/ruby:${RUBY_VERSION}-slim AS base
+
+WORKDIR /rails
+
+COPY --from=node /usr/local/bin/node /usr/local/bin/node
+COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm && \
+    ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx && \
+    ln -s ../lib/node_modules/corepack/dist/corepack.js /usr/local/bin/corepack
+
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y \
-      build-essential \
-      libpq-dev \
-      libyaml-dev \
-      curl \
-      git \
-      pkg-config \
-      libvips \
-      postgresql-client \
-      nodejs \
-      npm && \
-    npm install -g yarn && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get install --no-install-recommends -y curl libjemalloc2 libvips libpq-dev && \
+    rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
-# Instala TODAS las gems, incluyendo los grupos :development y :test
-# (el Dockerfile de produccion de Rails los excluye a proposito, por eso faltaban)
+ENV BUNDLE_PATH="/usr/local/bundle"
+
+# Entorno local: incluye herramientas para compilar gemas y paquetes JavaScript.
+FROM base AS development
+
+ENV RAILS_ENV="development" \
+    BUNDLE_DEPLOYMENT="0" \
+    BUNDLE_WITHOUT=""
+
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y build-essential git libyaml-dev pkg-config && \
+    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
 COPY Gemfile Gemfile.lock ./
 RUN bundle install
 
+# Todavía no existe package-lock.json en este prototipo: se usa "npm install"
+# (no "npm ci") para que el primer build lo genere sin fallar.
+COPY package.json ./
+RUN npm install && gem install foreman
+
 COPY . .
 
-COPY entrypoint.sh /usr/bin/
-RUN chmod +x /usr/bin/entrypoint.sh
-ENTRYPOINT ["entrypoint.sh"]
-
 EXPOSE 3000
+CMD ["./bin/rails", "server", "-b", "0.0.0.0"]
 
-CMD ["bin/rails", "server", "-b", "0.0.0.0"]
+# Etapa temporal para construir la imagen de producción.
+FROM base AS build
+
+ENV RAILS_ENV="production" \
+    BUNDLE_DEPLOYMENT="1" \
+    BUNDLE_WITHOUT="development"
+
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y build-essential git libyaml-dev pkg-config && \
+    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
+COPY Gemfile Gemfile.lock ./
+RUN bundle install && \
+    rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
+    bundle exec bootsnap precompile --gemfile
+
+COPY package.json ./
+RUN npm install
+
+COPY . .
+RUN chmod +x bin/* && \
+    bundle exec bootsnap precompile app/ lib/
+RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
+
+# Imagen final de producción.
+FROM base AS production
+
+ENV RAILS_ENV="production" \
+    BUNDLE_DEPLOYMENT="1" \
+    BUNDLE_WITHOUT="development"
+
+COPY --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
+COPY --from=build /rails /rails
+
+RUN groupadd --system --gid 1000 rails && \
+    useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash && \
+    chown -R rails:rails log storage tmp && \
+    chmod -R u+rwX log storage tmp
+
+USER 1000:1000
+ENTRYPOINT ["/rails/bin/docker-entrypoint"]
+EXPOSE 3000
+CMD ["./bin/rails", "server"]

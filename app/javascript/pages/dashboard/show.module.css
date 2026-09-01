@@ -1,0 +1,95 @@
+.page {
+  display: flex;
+  min-height: 100vh;
+  padding: 24px;
+  align-items: center;
+  justify-content: center;
+  background: #f2f2ef;
+}
+
+.card {
+  width: 100%;
+  max-width: 560px;
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.avatar,
+.avatarFallback {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+
+.avatar {
+  object-fit: cover;
+}
+
+.avatarFallback {
+  display: grid;
+  place-items: center;
+  background: #171717;
+  color: #ffffff;
+}
+
+.avatarFallback svg {
+  width: 20px;
+  height: 20px;
+}
+
+.description {
+  margin: 0 0 16px;
+  color: #5f5f5c;
+  font-size: 0.9rem;
+}
+
+.meta {
+  display: grid;
+  margin: 0;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.meta dt {
+  margin: 0 0 4px;
+  color: #8a8a86;
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.meta dd {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.roleBadge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  text-transform: capitalize;
+}
+
+.roleBadge[data-role='administrador'] {
+  background: color-mix(in oklch, #4285f4 15%, transparent);
+  color: #1a56c4;
+}
+
+.roleBadge[data-role='usuario'] {
+  background: color-mix(in oklch, #34a853 15%, transparent);
+  color: #1a7f37;
+}
