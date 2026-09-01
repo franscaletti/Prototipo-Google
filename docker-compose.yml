@@ -19,7 +19,6 @@ services:
     command: bash -c "bin/rails server -b 0.0.0.0"
     volumes:
       - .:/app
-      - bundle_data:/usr/local/bundle
       - node_modules_data:/app/node_modules
     ports:
       - "3000:3000"
@@ -32,5 +31,4 @@ services:
 
 volumes:
   db_data:
-  bundle_data:
   node_modules_data:
