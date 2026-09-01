@@ -1,6 +1,6 @@
 # Prototipo: Integración con Google
 
-Prototipo de la Segunda Fase del [Plan de Prototipos](https://docs.google.com/document/d/18CiQdJ76j2-vrijp-iGfn1UJRLI2luYMfRx4_g9HfAw) (Grupo 2, GoGrow). Base visual heredada del [prototipo de UI de Pablo Caffaro](https://github.com/PabloCaffaro/gogrow-react-prototype) (Rails + Inertia.js + React + shadcn/ui), donde el botón "Continuar con Google" existía pero estaba deshabilitado. Acá ese login es real.
+Prototipo de la Segunda Fase del [Plan de Prototipos](https://docs.google.com/document/d/18CiQdJ76j2-vrijp-iGfn1UJRLI2luYMfRx4_g9HfAw) (Grupo 2, GoGrow). Base visual heredada del otro prototipo.
 
 ## Objetivo del prototipo
 
