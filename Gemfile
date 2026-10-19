@@ -57,7 +57,7 @@ group :test do
 end
 
 # --- Prototipo de integración con Google (PIS) ---
-gem "inertia_rails", "~> 3.22"
+gem "inertia_rails", "~> 3.23"
 gem "vite_rails", "~> 3.11"
 
 # Login real con cuenta de Google (OAuth2) para Empleado/Administrador.
